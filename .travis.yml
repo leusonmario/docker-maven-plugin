@@ -1,18 +1,26 @@
+
+sudo: required
 language: java
+
 jdk:
   - oraclejdk8
+
+
 script:
-  - mvn test -B -Pjacoco
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
-after_script:
-  - "[[ $TRAVIS_PULL_REQUEST == false ]] && mvn -Pjacoco package sonar:sonar -Dsonar.host.url=https://sonarqube.com -Dsonar.login=${SONARQUBE_TOKEN}"
+  - mvn clean cobertura:cobertura -Dtest=BuildMojoTest#testBuildWithGeneratedDockerfile -DfailIfNoTests=false
+
+before_deploy:
+- tar -zcvf coverage-result.tar.gz /home/travis/build/leusonmario/docker-maven-plugin/target/site/cobertura
+
+deploy:
+  provider: releases
+  api_key:
+    secure: "p8rq+oEpgAWTbEaNwFX7ux1gz7XIEXnfnyvszYrpFEHGOs0R2dWMgxBn5CCaOOWMA9d3/5nS5mCHvdSVkYhwQfc6/97DBoWsD2j6SBQqaR0rKQXQgu1kRYTon8XntgRL5wc6RLwoClv7HNfHTxs9cYVQCT3YXBc6Kr509FHwmdo5XgKh+rRmpsVCpOekYflj5Cb5E2YlKu+HGlIZQpMxXlL/fo6MefrVKmVk2SrOgZ5ZBsXhJob4Pa24wX/FMUD9oTsdUZpPmduOPl9mRtKNktF2Xh9QLCc7muyRu3qc+tRu7m08GPMcn6rQMz1kxJFHyiIqEe211zJXjTGmphHULf2R84EGgctCfCmH0O+TCSI8DVR5AuzoUUGd3rd/3AbW2g5nlQ434dNpjBz1v96i9b9Ps1NSrHpogTJGEDV3Ka/s/GN8m6hU9yfNotbBcUIkoLDyPPf7qTI5mAXY7Lcvx2ZjsPzYTLSLeManJ0x5EF769s4F1vb6FqYlmdjacKv5I7C1tTY8Ks8qdTN0n6tcjgucHS170tVlRVIjnUXqbF2OBIMWoz2OKnkVf7E5kO2dUuSlLJ4tToTjnKI5BVF/16skM2YAMha2OBOgqvP5sl65/NJU8JPmjmnemXJYHDndGI2/eR/tNb1LGeUZVP4+GBpBeyufh7NlNxmxilMtrpM="
 
 
-notifications:
-  webhooks:
-    urls:
-      - https://webhooks.gitter.im/e/a5a30ac50f16b6cf25ab
-    on_success: change  # options: [always|never|change] default: always
-    on_failure: always  # options: [always|never|change] default: always
-    on_start: never     # options: [always|never|change] default: always
+  file: coverage-result.tar.gz
+  file_glob: true
+  overwrite: true
+  skip_cleanup: true
+  on:
+    tags: true
